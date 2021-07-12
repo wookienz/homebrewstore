@@ -14,13 +14,12 @@ class brewerscoop():
         :return:
         """
         self.BASE_URL = 'https://www.haurakihomebrew.co.nz'
-        #self.imported_grain_url = '/category/160453'
         self.grain_url = '/collections/beer-crushed-to-order-malted-barley-milled'
         self.dried_yeast_url = '/collections/beer-dry-beer-yeast'
         self.liquid_yeast_url = '/beer-white-labs-liquid-yeast'
         self.nz_hops = '/collections/beer-nz-hops-cone-pellet'
         self.imported_hops = '/collections/beer-imported-hops'
-        self.all_urls = [self.dried_yeast_url, self.grain_url, self.nz_hops, self.imported_hops]
+        self.all_urls = [self.dried_yeast_url, self.grain_url, self.nz_hops, self.imported_hops, self.liquid_yeast_url]
         self.s = requests.session()
         return
 
@@ -47,7 +46,7 @@ class brewerscoop():
 
     def _parseurl(self, url, sub='get', payload=''):
         if sub == 'get':
-            r = self.s.get(url, verify=False)
+            r = self.s.get(url, verify=True)
         else:
             r = self.s.post(url, data=payload, verify=False)
         return r
@@ -66,7 +65,7 @@ class brewerscoop():
             for link in links:
                 a.append(self.BASE_URL + link['href'])
             a.pop(-1)
-            a.append(self.BASE_URL + '/collections/' + url.rpartition('/')[-1] + '?page=1')
+        a.append(self.BASE_URL + '/collections/' + url.rpartition('/')[-1] + '?page=1')
         return a
 
     def _update_single_product(self, url):
@@ -95,16 +94,17 @@ class brewerscoop():
         soup = BeautifulSoup(html, features="html.parser")
         product_details = []
         products = soup.findAll('div', {'class': 'grid-product__wrapper'})
-        for product in products:
-            item_name = product.find('span', {'class': 'grid-product__title'}).text
-            item_url = product.a['href']
-            item_price = product.find('span', {'class': 'grid-product__price'}).text # 'Regular price  $6.80'
-            item_price = item_price.split('\n')[4].lstrip() # cant get text value of inner text of douible span element, split it out.
-            if product.find(class_='grid-product__sold-out'):
-                item_qty_avail = 0
-            else:
-                item_qty_avail = 1
-            product_details.append((item_price, item_name, item_qty_avail, item_url))
+        if products:
+            for product in products:
+                item_name = product.find('span', {'class': 'grid-product__title'}).text
+                item_url = product.a['href']
+                item_price = product.find('span', {'class': 'grid-product__price'}).text # 'Regular price  $6.80'
+                item_price = item_price.split('\n')[4].lstrip() # cant get text value of inner text of douible span element, split it out.
+                if product.find(class_='grid-product__sold-out'):
+                    item_qty_avail = 0
+                else:
+                    item_qty_avail = 1
+                product_details.append((item_price, item_name, item_qty_avail, item_url))
         return product_details
 
     def _store(self, deets_array):
