@@ -13,27 +13,15 @@ class brewerscoop():
         :param self:
         :return:
         """
-        self.BASE_URL = 'https://www.brewerscoop.co.nz'
-        self.imported_grain_url = '/category/160453'
-        self.nz_grain_url = '/category/160451'
-        self.dried_yeast_url = '/category/146269'
-        self.liquid_yeast_url = '/category/146268'
-        self.nz_hops = '/category/159655'
-        self.imported_hops = '/category/159656'
-        #yeasts category / 159689, /category/159691, /category/159690
-        self.all_urls = [self.dried_yeast_url, self.nz_grain_url, self.nz_grain_url,
-                         self.imported_grain_url, self.nz_hops, self.imported_hops]
+        self.BASE_URL = 'https://www.haurakihomebrew.co.nz'
+        #self.imported_grain_url = '/category/160453'
+        self.grain_url = '/collections/beer-crushed-to-order-malted-barley-milled'
+        self.dried_yeast_url = '/collections/beer-dry-beer-yeast'
+        self.liquid_yeast_url = '/beer-white-labs-liquid-yeast'
+        self.nz_hops = '/collections/beer-nz-hops-cone-pellet'
+        self.imported_hops = '/collections/beer-imported-hops'
+        self.all_urls = [self.dried_yeast_url, self.grain_url, self.nz_hops, self.imported_hops]
         self.s = requests.session()
-        return
-
-    def _prepare_urls(self):
-        """
-        BC has many sub products to get to the desired products. aka yeats has dried yeast and liquid yeasts
-        sub-categoreids. Likewise grain for NZ and imported. This will look at each main page and return if needed the
-        links to the sub categories of products.
-        :return: urls of the sub category pages
-        :type: list
-        """
         return
 
     def update_products(self):
@@ -46,16 +34,6 @@ class brewerscoop():
             #entire_page = self.load_entire_page(self.BASE_URL + product_url)
             #details = self._update_single_product(entire_page)
             self._store(products)
-        return
-
-    def _combine_yeast_pages(self, url):
-        """
-        Return urls containing the tow yeast pages. Both dried and liquid.
-        :return:
-        """
-        html = self._parseurl(url)
-        soup = BeautifulSoup(html.text, features="html.parser")
-        elements = soup.findAll('li', {'class': 'cmsItemLI'})
         return
 
     def load_entire_page(self, url):
@@ -82,11 +60,13 @@ class brewerscoop():
         html = self._parseurl(url)
         soup = BeautifulSoup(html.text, features="html.parser")
         a = []
-        if soup.find('p', {'class': 'shoppingnav'}):
-            links = soup.findAll('a', {'class': 'pagenav'})
+        pagination = soup.find('div', {'class': 'pagination'})
+        if pagination:
+            links = pagination.findAll('a')
             for link in links:
                 a.append(self.BASE_URL + link['href'])
-        a.append(self.BASE_URL + '/category/' + url.rpartition('/')[-1] + '?nav=shoppingnav&page_start=0')  # adds current page to the list
+            a.pop(-1)
+            a.append(self.BASE_URL + '/collections/' + url.rpartition('/')[-1] + '?page=1')
         return a
 
     def _update_single_product(self, url):
@@ -108,22 +88,22 @@ class brewerscoop():
 
     def _extract_products_from_page(self, html):
         """
-
+        This method needs to be changed for each brew website
         :param html:
         :return:
         """
         soup = BeautifulSoup(html, features="html.parser")
         product_details = []
-        products = soup.findAll('li', {'class': 'cmsItemLI'})
+        products = soup.findAll('div', {'class': 'grid-product__wrapper'})
         for product in products:
-            item_name = product.find(class_='cmsTitle').a.text
-            item_url = product.find(class_='cmsTitle').a['href']  # /product/1717376
-            item_price = product.find(class_='value').text  # <b class="value">4.70</b>
-            if product.find(class_='outofstock'):
+            item_name = product.find('span', {'class': 'grid-product__title'}).text
+            item_url = product.a['href']
+            item_price = product.find('span', {'class': 'grid-product__price'}).text # 'Regular price  $6.80'
+            item_price = item_price.split('\n')[4].lstrip() # cant get text value of inner text of douible span element, split it out.
+            if product.find(class_='grid-product__sold-out'):
                 item_qty_avail = 0
             else:
-                item_qty_avail = product.find(class_='qtyTextField')[
-                    'value']  # <input class="qtyTextField" name="b_qty" size="4" value="1"/>
+                item_qty_avail = 1
             product_details.append((item_price, item_name, item_qty_avail, item_url))
         return product_details
 
