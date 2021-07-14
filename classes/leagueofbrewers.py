@@ -17,10 +17,12 @@ class leagueofbrewers():
         :return:
         """
         self.BASE_URL = 'https://leagueofbrewers.co.nz/homebrew-beer-supplies/beer-brewing-ingredients/'
-        self.grain_url = 'malt-for-making-beer/grain-for-brewing'
-        self.yeast_url = 'beer-brewing-yeast'
-        self.hops_url = 'hops-for-brewing-beer'
-        self.all_urls = [self.hops_url, self.grain_url, self.yeast_url]
+        self.grain_url = 'malt-for-making-beer/grain-for-brewing?limit=25'
+        self.liquid_yeast_url = 'beer-brewing-yeast/liquid-yeast-for-beer?limit=25'
+        self.dry_yeast = 'beer-brewing-yeast/dry-yeast-for-beer?limit=25'
+        self.hops_url = 'hops-for-brewing-beer?limit=25'
+        # self.all_urls = [self.hops_url, self.grain_url, self.dry_yeast, self.liquid_yeast_url]
+        self.all_urls = [self.liquid_yeast_url]
         self.s = requests.session()
         return
 
@@ -86,6 +88,7 @@ class leagueofbrewers():
         for a in deets_array:
             for b in a:
                 print(b)
+        print(len(deets_array))
 
 
 if __name__ == '__main__':

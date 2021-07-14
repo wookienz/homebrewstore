@@ -70,8 +70,8 @@ class homebrewwest():
         product_details = []
         soup = BeautifulSoup(html, features="html.parser")
         for product in soup.findAll(class_='product'):
-            product_name = product.find(class_='name').text
-            product_price = product.find(class_='price').text
+            product_name = (product.find(class_='name').text).strip()
+            product_price = (product.find(class_='price').text).strip()
             product_link = product.a['href']
             if product.find(class_='backorder'): #check works.
                 product_availability = 0
